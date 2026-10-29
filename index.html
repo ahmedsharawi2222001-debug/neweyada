@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>عيادة الابتسامة | نظام إدارة العيادة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Aref+Ruqaa:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="logo">
+      <div class="mark">🦷</div>
+      <div>
+        <div class="name brand-font">عيادة الابتسامة</div>
+        <div class="sub">نظام إدارة العيادة</div>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button data-tab="home" class="active">الرئيسية</button>
+      <button data-tab="services">الخدمات</button>
+      <button data-tab="bookings">الحجوزات</button>
+      <button data-tab="patients">ملفات المرضى</button>
+      <button data-tab="settings">الإعدادات</button>
+    </nav>
+  </header>
+
+  <!-- HOME -->
+  <div class="view active" id="view-home">
+    <div class="hero">
+      <div class="eyebrow">لوحة العيادة اليومية</div>
+      <h1 id="heroDate">أهلًا بيك، النهارده الأربعاء</h1>
+      <p>لوحة متابعة الدكتور: حجوزات اليوم، وملفات المرضى، والخدمات من مكان واحد. الحجوزات الجديدة بتوصل تلقائيًا من فورم الحجز عن طريق n8n.</p>
+      <div class="cta">
+        <button class="btn btn-gold" onclick="switchTab('patients')">ملفات المرضى</button>
+        <button class="btn btn-ghost" onclick="switchTab('bookings')">كل الحجوزات</button>
+      </div>
+      <div class="smile-arc" id="smileArc"></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="num" id="statToday">0</div><div class="label">حجوزات اليوم</div></div>
+      <div class="stat-card"><div class="num" id="statPatients">0</div><div class="label">إجمالي المرضى</div></div>
+      <div class="stat-card"><div class="num" id="statServices">0</div><div class="label">الخدمات المتاحة</div></div>
+      <div class="stat-card"><div class="num" id="statMonth">0</div><div class="label">حجوزات الشهر</div></div>
+    </div>
+
+    <section class="block">
+      <h2>حجوزات اليوم <span class="count" id="todayCount">0</span></h2>
+      <div id="todayBookingsList"></div>
+    </section>
+  </div>
+
+  <!-- SERVICES -->
+  <div class="view" id="view-services">
+    <section class="block">
+      <h2>الخدمات المقدمة <span class="count" id="servicesCount">0</span></h2>
+      <div class="toolbar">
+        <input class="search-input" id="serviceSearch" placeholder="ابحث عن خدمة...">
+        <button class="btn btn-teal" onclick="openServiceModal()">+ إضافة خدمة</button>
+      </div>
+      <div class="grid-services" id="servicesGrid"></div>
+    </section>
+  </div>
+
+  <!-- BOOKINGS -->
+  <div class="view" id="view-bookings">
+    <section class="block">
+      <h2>الحجوزات <span class="count" id="bookingsCount">0</span></h2>
+      <div class="toolbar">
+        <input type="date" class="search-input" id="bookingDateFilter" style="max-width:190px;">
+        <button class="btn btn-outline btn-sm" onclick="clearDateFilter()">كل التواريخ</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-outline btn-sm" onclick="fetchBookingsFromSheet()">↻ تحديث الحجوزات</button>
+      </div>
+      <div id="bookingsTableWrap"></div>
+    </section>
+  </div>
+
+  <!-- PATIENTS -->
+  <div class="view" id="view-patients">
+    <section class="block">
+      <h2>ملفات المرضى <span class="count" id="patientsCount">0</span></h2>
+      <div class="toolbar">
+        <input class="search-input" id="patientSearch" placeholder="ابحث بالاسم أو رقم الهاتف...">
+        <select class="search-input" id="patientSort" style="flex:0 0 auto;min-width:0;">
+          <option value="recent">الأحدث زيارة</option>
+          <option value="next">الميعاد القادم</option>
+          <option value="name">الاسم</option>
+        </select>
+        <label style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;white-space:nowrap;">
+          <input type="checkbox" id="patientUpcomingOnly"> عندهم ميعاد قادم
+        </label>
+        <button class="btn btn-teal" onclick="openPatientModal()">+ إضافة مريض</button>
+      </div>
+      <div id="patientsTableWrap"></div>
+    </section>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="view" id="view-settings">
+    <section class="block">
+      <h2>الإعدادات</h2>
+      <div class="card">
+        <div class="field">
+          <label>اسم العيادة</label>
+          <input id="setClinicName" placeholder="عيادة الابتسامة">
+        </div>
+        <div class="field">
+          <label>رقم هاتف العيادة</label>
+          <input id="setClinicPhone" placeholder="01xxxxxxxxx">
+        </div>
+        <div class="field">
+          <label>رابط n8n لاستقبال الحجوزات (GET) — اختياري</label>
+          <input id="setBookingsUrl" placeholder="https://your-n8n-instance/webhook/bookings" dir="ltr" style="text-align:left;">
+        </div>
+        <div class="field">
+          <label>رابط Webhook لإرسال تغيير حالة الحجز لـ n8n (POST) — اختياري</label>
+          <input id="setWebhookUrl" placeholder="https://your-n8n-instance/webhook/xxxx" dir="ltr" style="text-align:left;">
+        </div>
+        <div class="settings-note">
+          <b>الربط مع n8n:</b><br>
+          • <b>استقبال الحجوزات:</b> الفورم بتاعك في n8n بيسجل الحجز، والموقع بيسحبه كل 30 ثانية. لو كتبت رابط n8n (Webhook من نوع GET بيرجّع JSON فيه الحجوزات) فوق، الموقع هيسحب منه مباشرة. لو سبته فاضي، هيقرا من ملف <code>bookings.json</code> اللي n8n بيحدّثه على GitHub.<br>
+          • الأعمدة المقبولة: الاسم، الهاتف، الخدمة، التاريخ، الوقت، الحالة، ملاحظات (<code>patientName / phone / serviceName / date / time / status / notes</code> بالإنجليزي كمان).<br>
+          • <b>إرسال التحديثات:</b> لما تغيّر حالة حجز (تم / إلغاء) بيتبعت لرابط الـ POST. ملاحظات الدكتور والبيانات الطبية <b>مش</b> بتتبعت.<br>
+          • لو سحبت من رابط n8n مباشرة لازم تفعّل CORS في الـ Webhook node (Allowed Origins).
+        </div>
+        <div class="modal-actions" style="justify-content:flex-start;margin-top:16px;">
+          <button class="btn btn-teal" onclick="saveSettings()">حفظ الإعدادات</button>
+          <button class="btn btn-outline" onclick="testWebhook()">اختبار إرسال Webhook</button>
+          <button class="btn btn-outline" onclick="fetchBookingsFromSheet()">تحديث الحجوزات الآن</button>
+        </div>
+        <div id="webhookStatus"></div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h3 style="margin-bottom:8px;color:var(--teal);font-size:16px;">نسخة احتياطية</h3>
+        <div class="settings-note" style="margin-top:0;">
+          ملفات المرضى وملاحظات الدكتور محفوظة في متصفح الجهاز ده. نزّل نسخة احتياطية بشكل دوري، وتقدر ترجّعها على أي جهاز تاني.
+        </div>
+        <div class="modal-actions" style="justify-content:flex-start;margin-top:14px;">
+          <button class="btn btn-teal" onclick="exportBackup()">تنزيل نسخة احتياطية</button>
+          <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">استرجاع نسخة</button>
+          <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importBackup(this)">
+        </div>
+      </div>
+    </section>
+  </div>
+
+</div>
+
+<!-- Service Modal -->
+<div class="overlay" id="modalService">
+  <div class="modal">
+    <h3 id="serviceModalTitle">إضافة خدمة</h3>
+    <input type="hidden" id="serviceId">
+    <div class="field"><label>اسم الخدمة</label><input id="serviceName"></div>
+    <div class="field"><label>الوصف</label><textarea id="serviceDesc"></textarea></div>
+    <div class="field-row">
+      <div class="field"><label>السعر (جنيه)</label><input id="servicePrice" type="number"></div>
+      <div class="field"><label>مدة الجلسة (دقيقة)</label><input id="serviceDuration" type="number"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modalService')">إلغاء</button>
+      <button class="btn btn-teal" onclick="saveService()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Patient Modal -->
+<div class="overlay" id="modalPatient">
+  <div class="modal">
+    <h3 id="patientModalTitle">إضافة مريض</h3>
+    <input type="hidden" id="patientId">
+    <div class="field-row">
+      <div class="field"><label>الاسم</label><input id="patientName"></div>
+      <div class="field"><label>السن</label><input id="patientAge" type="number"></div>
+    </div>
+    <div class="field"><label>رقم الهاتف</label><input id="patientPhone" dir="ltr"></div>
+    <div class="field"><label>العنوان</label><input id="patientAddress"></div>
+    <div class="field"><label>تنبيهات طبية (حساسية، أمراض مزمنة، أدوية...)</label><textarea id="patientAlerts" placeholder="هتظهر للدكتور كتنبيه في أول الملف"></textarea></div>
+    <div class="field"><label>التاريخ المرضي / ملاحظات</label><textarea id="patientHistory"></textarea></div>
+    <div class="field"><label>خطة العلاج / المتابعة</label><textarea id="patientPlan"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modalPatient')">إلغاء</button>
+      <button class="btn btn-teal" onclick="savePatient()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Patient Detail Modal -->
+<div class="overlay" id="modalPatientDetail">
+  <div class="modal" id="patientDetailContent"></div>
+</div>
+
+<!-- Visit Notes Modal (بعد نافذة الملف عشان تظهر فوقها) -->
+<div class="overlay" id="modalVisit">
+  <div class="modal">
+    <h3 id="visitTitle">ملاحظات الزيارة</h3>
+    <input type="hidden" id="visitId">
+    <div class="field"><label>التشخيص</label><input id="visitDiagnosis"></div>
+    <div class="field"><label>العلاج اللي اتعمل</label><textarea id="visitTreatment"></textarea></div>
+    <div class="field"><label>ملاحظات الدكتور / المتابعة</label><textarea id="visitDoctorNotes"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modalVisit')">إلغاء</button>
+      <button class="btn btn-teal" onclick="saveVisit()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
